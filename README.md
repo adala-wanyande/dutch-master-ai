@@ -1,166 +1,185 @@
-# 🇳🇱 DutchMaster AI: The Polyglot Homework Helper
+# DutchMaster AI
 
-**DutchMaster AI** is a multi-modal web application designed to bridge the gap between "textbook Dutch" and "native fluency."
+A multi-model web application for Dutch homework analysis. Uses three AI providers (OpenAI, Anthropic, Google) in parallel to analyze homework images, explain grammar rules, and decode Dutch idioms.
 
-Unlike standard translation tools that offer literal interpretations, this agent acts as a **human-in-the-loop linguistic tutor**. It uses a swarm of three state-of-the-art AI models (GPT-4o, Claude 3.5 Sonnet, and Gemini 1.5 Pro) to analyze images of homework, compare answers, and—most importantly—explain the **idiomatic context** and **grammatical rules** behind every solution.
+## Features
 
----
+- **Multi-Model Analysis**: Queries GPT-5/o3, Claude Sonnet 4, and Gemini 3 Pro simultaneously
+- **10 Homework Types**: Specialized prompts for each exercise type (Tekst + 9 Oefeningen)
+- **3 Model Tiers**: Thinking (deep reasoning), Pro (balanced), Fast (quick responses)
+- **Idiom Detection**: Identifies Dutch expressions with literal translations, meanings, and origins
+- **Grammar Explanations**: Cites specific rules for word order, prepositions, and spelling
+- **PDF Export**: Download all responses as a formatted PDF for academic records
+- **Markdown Rendering**: Properly formatted responses with headers, lists, and emphasis
 
-## 🚀 Key Features & Implementation Strategy
-
-This application is architected to handle the specific "Oefening" (Exercise) structure of advanced Dutch learning.
-
-### 1. The "Consensus Engine" (Multi-Model Comparison)
-**Goal:** Prevent hallucinations and "Dunglish" translations.
-*   **The Problem:** One model might give a grammatically correct but socially awkward answer.
-*   **The Solution:** We query three models in parallel.
-    *   **GPT-4o:** The Logic Anchor (Great for strict grammar rules).
-    *   **Claude 3.5 Sonnet:** The Poet (Excellent for nuance, tone, and idioms).
-    *   **Gemini 1.5 Pro:** The Context King (Large context window for long texts).
-*   **Implementation:**
-    *   **Backend:** FastAPI using `asyncio.gather()` to hit all 3 API endpoints simultaneously to minimize latency.
-    *   **Frontend:** A 3-column "Battle View" allowing the user to compare responses side-by-side.
-
-### 2. The Idiom Deep-Dive (Context Engine)
-*Applies to: Tekst, Oefening 2, 4, 7*
-*   **Feature:** Instead of translating "De kat uit de boom kijken" as "Looking the cat out of the tree," the agent identifies it as an idiom.
-*   **Output:** Returns a structured card containing:
-    1.  **Literal:** "Look cat out of tree."
-    2.  **Meaning:** "To wait and see which way the wind blows."
-    3.  **Origin:** Historical context of the phrase.
-    4.  **Register:** Is this formal, street slang, or old-fashioned?
-*   **Implementation:** System prompts instruct the AI to return **JSON** data, which the frontend renders into interactive "Idiom Cards" rather than plain text.
-
-### 3. The Grammar Mechanic
-*Applies to: Oefening 3 (Woordvolgorde), 5 (Voorzetsels), 6 (Spelling)*
-*   **Feature:** It doesn't just solve the problem; it cites the rule.
-*   **Example Output:** "Answer: *heeft*. **Reason:** This is the Present Perfect (V.T.T). Because the auxiliary verb is used with a static verb of position, we use *hebben*, not *zijn*."
-*   **Implementation:** The system prompt forces a "Answer + Citation" format. If models disagree on a preposition (e.g., *op* vs *aan*), the UI highlights the conflict for user review.
-
-### 4. The "Native" Writing Coach
-*Applies to: Oefening 8 (Opstel)*
-*   **Feature:** Users upload a photo of their handwritten essay or type a draft.
-*   **Action:** The AI performs "Idiom Injection." It corrects errors but also suggests 3 specific changes to make the text sound less like a translation and more like a native speaker wrote it.
-*   **Implementation:** A tiered prompt strategy: (1) Transcribe -> (2) Correct Grammar -> (3) Elevate Style.
-
----
-
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Frontend
-*   **Framework:** **Next.js 14+** (App Router)
-*   **Styling:** **Tailwind CSS** (Grid layouts for comparison views)
-*   **Icons:** Lucide React
-*   **State Management:** React Hooks (for handling image upload/preview)
+- Next.js 16 (App Router)
+- Tailwind CSS 4 with Typography plugin
+- React Markdown for response rendering
+- jsPDF for PDF generation
+- Lucide React icons
 
 ### Backend
-*   **Framework:** **FastAPI** (Python)
-*   **Concurrency:** `asyncio` for parallel model execution
-*   **Validation:** Pydantic (ensuring AI returns valid data structures)
-*   **Image Processing:** Pillow (PIL) for optimization before API transmission
+- FastAPI with async support
+- Parallel model execution via asyncio.gather()
+- Pydantic for response validation
 
-### AI Models (The Swarm)
-*   **OpenAI:** GPT-4o
-*   **Anthropic:** Claude 3.5 Sonnet
-*   **Google:** Gemini 1.5 Pro
+### AI Models
 
----
+| Tier | OpenAI | Anthropic | Google |
+|------|--------|-----------|--------|
+| Thinking | o3 | Claude Sonnet 4 (extended thinking) | Gemini 2.5 Pro |
+| Pro | GPT-5 | Claude Sonnet 4 | Gemini 3 Pro |
+| Fast | GPT-4o Mini | Claude 3.5 Haiku | Gemini 3 Flash |
 
-## 📂 Project Structure
+## Project Structure
 
-```bash
+```
 /dutch-master-ai
-├── /frontend          # Next.js Application
-│   ├── /app           # App Router pages
-│   ├── /components    # UI Components (AnalysisGrid, UploadZone)
-│   └── /utils         # API client helpers
-├── /backend           # FastAPI Application
-│   ├── /routers       # Endpoint logic
-│   ├── /services      # Wrappers for OpenAI, Anthropic, Gemini
-│   ├── main.py        # Entry point
-│   └── requirements.txt
+├── /frontend
+│   ├── /src
+│   │   ├── /app              # Next.js pages
+│   │   ├── /components       # UI components
+│   │   │   ├── UploadZone.tsx
+│   │   │   ├── TaskSelector.tsx
+│   │   │   ├── ModelTierSelector.tsx
+│   │   │   ├── ModelCard.tsx
+│   │   │   ├── IdiomCard.tsx
+│   │   │   └── AnalysisGrid.tsx
+│   │   └── /utils
+│   │       ├── api.ts        # API client
+│   │       └── pdf.ts        # PDF generation
+│   ├── .env.example
+│   └── package.json
+├── /backend
+│   ├── /services
+│   │   ├── __init__.py
+│   │   ├── openai_service.py
+│   │   ├── anthropic_service.py
+│   │   └── gemini_service.py
+│   ├── main.py               # FastAPI app
+│   ├── models_config.py      # Model tier configuration
+│   ├── requirements.txt
+│   ├── render.yaml           # Render deployment config
+│   └── .env.example
 └── README.md
 ```
 
----
+## Homework Types
 
-## ⚡️ Quick Start Guide
+1. **Tekst** - Main chapter text analysis with vocabulary and cultural context
+2. **Oefening 1 - Vragen** - Open-ended comprehension questions
+3. **Oefening 2 - Formulering** - Correct formulation (idioms/expressions)
+4. **Oefening 3 - Woordvolgorde** - Word order exercises
+5. **Oefening 4 - Uitdrukkingen** - Fill-in-the-blank expressions
+6. **Oefening 5 - Voorzetsels** - Preposition selection
+7. **Oefening 6 - Spelling** - Verb conjugation (OTT/OVT)
+8. **Oefening 7 - Woordenschat** - Vocabulary in context
+9. **Oefening 8 - Opstel** - Essay writing (200-250 words)
+10. **Oefening 9 - Luisteren/Spreken** - Listening and speaking preparation
+
+## Local Development
 
 ### Prerequisites
-1.  **Node.js** (v18+)
-2.  **Python** (v3.10+)
-3.  **API Keys** for OpenAI, Anthropic, and Google AI Studio.
+- Node.js 18+
+- Python 3.10+
+- API keys for OpenAI, Anthropic, and Google AI
 
-### 1. Backend Setup (FastAPI)
+### Backend Setup
 
-Navigate to the backend folder:
 ```bash
 cd backend
-```
-
-Create a virtual environment and activate it:
-```bash
 python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
-```
-
-Install dependencies:
-```bash
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-Create a `.env` file in the `backend` directory:
-```env
-OPENAI_API_KEY="sk-..."
-ANTHROPIC_API_KEY="sk-ant-..."
-GOOGLE_API_KEY="AIza..."
-```
-
-Run the server:
-```bash
+cp .env.example .env
+# Edit .env with your API keys
 uvicorn main:app --reload
 ```
-*The backend is now running at `http://127.0.0.1:8000`*
 
-### 2. Frontend Setup (Next.js)
+Backend runs at http://127.0.0.1:8000
 
-Navigate to the frontend folder:
+### Frontend Setup
+
 ```bash
 cd frontend
-```
-
-Install dependencies:
-```bash
 npm install
-```
-
-Run the development server:
-```bash
+cp .env.example .env.local
+# Edit .env.local if needed (defaults to localhost:8000)
 npm run dev
 ```
-*The app is now running at `http://localhost:3000`*
 
----
+Frontend runs at http://localhost:3000
 
-## 📖 Usage Guide
+## Deployment
 
-1.  **Select Task:** Choose your specific homework exercise (e.g., "Grammar & Word Order" or "Essay Review").
-2.  **Capture:** Click the camera icon to snap a photo of your textbook page or handwritten notes.
-3.  **Analyze:** Hit "Process". The system will send the image to all 3 AIs.
-4.  **Compare:** Watch the columns populate.
-    *   *Green Check:* All models agree.
-    *   *Yellow Alert:* Models disagree (indicates a nuanced linguistic point).
-5.  **Learn:** Click on highlighted phrases to see the "Idiom Card" popup.
+### Backend on Render (Free Tier)
 
----
+1. Push code to GitHub
+2. Go to [render.com](https://render.com) > New > Web Service
+3. Connect your GitHub repo
+4. Configure:
+   - Root Directory: `backend`
+   - Runtime: Python
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+5. Add environment variables:
+   - `OPENAI_API_KEY`
+   - `ANTHROPIC_API_KEY`
+   - `GOOGLE_API_KEY`
+   - `ALLOWED_ORIGINS` (your Vercel URL, added after frontend deploy)
+6. Deploy and copy the service URL
 
-## 🗺 Roadmap
+### Frontend on Vercel (Free Tier)
 
-*   [ ] **Phase 1:** Core Logic. Build FastAPI backend with basic Multi-Model async support.
-*   [ ] **Phase 2:** Frontend UI. Build the upload & comparison grid in Next.js.
-*   [ ] **Phase 3:** Prompt Engineering. Refine system prompts for each specific "Oefening" type.
-*   [ ] **Phase 4:** Structured Output. Force JSON responses for the "Idiom" tasks to create a better UI experience.
-*   [ ] **Phase 5:** Deployment. Push to Vercel (FE) and Railway/Render (BE).
+1. Go to [vercel.com](https://vercel.com) > Import project
+2. Connect your GitHub repo
+3. Configure:
+   - Root Directory: `frontend`
+   - Framework: Next.js (auto-detected)
+4. Add environment variable:
+   - `NEXT_PUBLIC_API_URL` = your Render URL
+5. Deploy and copy the URL
+
+### Final Step
+
+Update Render's `ALLOWED_ORIGINS` environment variable with your Vercel URL.
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Health check |
+| GET | `/health` | Health status |
+| GET | `/models` | List available model tiers |
+| POST | `/analyze_homework` | Analyze uploaded image |
+
+### POST /analyze_homework
+
+Form data:
+- `file`: Image file (JPEG, PNG)
+- `task_type`: One of the 10 homework types
+- `model_tier`: `thinking`, `pro`, or `fast`
+
+Returns array of model responses with `model_name`, `content`, and optional `idiom_analysis`.
+
+## Environment Variables
+
+### Backend (.env)
+```
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_API_KEY=AIza...
+ALLOWED_ORIGINS=https://your-app.vercel.app
+```
+
+### Frontend (.env.local)
+```
+NEXT_PUBLIC_API_URL=https://your-api.onrender.com
+```
+
+## License
+
+MIT
