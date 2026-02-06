@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Download } from "lucide-react";
 import { UploadZone, TaskSelector, ModelTierSelector, AnalysisGrid } from "@/components";
 import { analyzeHomework, type ModelResponse, type TaskType, type ModelTier } from "@/utils/api";
+import { generateHomeworkPDF } from "@/utils/pdf";
 
 export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -40,6 +41,12 @@ export default function Home() {
     thinking: "Thinking Models",
     pro: "Pro Models",
     fast: "Fast Models",
+  };
+
+  const handleDownloadPDF = () => {
+    if (responses.length > 0) {
+      generateHomeworkPDF(responses, taskType);
+    }
   };
 
   return (
@@ -119,6 +126,17 @@ export default function Home() {
 
           {/* Step 5: Results */}
           <section>
+            {responses.length > 0 && !isLoading && (
+              <div className="mb-4 flex justify-end">
+                <button
+                  onClick={handleDownloadPDF}
+                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow transition-all hover:bg-blue-700"
+                >
+                  <Download className="h-4 w-4" />
+                  Download as PDF
+                </button>
+              </div>
+            )}
             <AnalysisGrid responses={responses} isLoading={isLoading} />
           </section>
         </div>
