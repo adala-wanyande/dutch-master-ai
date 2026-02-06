@@ -1,0 +1,25 @@
+# --- Python Cache (The "Weird Files") ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual Environments ---
+# Keeps your local library install out of the repo
+/backend/backend
+venv/
+.venv/
+env/
+.env
+
+# --- Environment Variables (CRITICAL) ---
+# Never commit your API keys
+.env
+.env.local
+
+# --- IDE Settings (Optional but recommended) ---
+.vscode/
+.idea/
+
+# --- System Junk ---
+.DS_Store
+Thumbs.db

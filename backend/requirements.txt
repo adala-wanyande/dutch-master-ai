@@ -1,0 +1,16 @@
+# --- Core Web Framework ---
+fastapi
+uvicorn[standard]
+python-multipart
+
+# --- AI SDKs ---
+openai
+anthropic
+google-genai
+
+# --- Utilities ---
+python-dotenv
+httpx
+Pillow
+
+pydantic
