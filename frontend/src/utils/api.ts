@@ -34,12 +34,14 @@ export type TaskType =
 export type ModelTier = "thinking" | "fast" | "pro";
 
 export async function analyzeHomework(
-  file: File,
+  files: File[],
   taskType: TaskType,
   modelTier: ModelTier = "pro"
 ): Promise<ModelResponse[]> {
   const formData = new FormData();
-  formData.append("file", file);
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
   formData.append("task_type", taskType);
   formData.append("model_tier", modelTier);
 
@@ -49,7 +51,14 @@ export async function analyzeHomework(
   });
 
   if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`);
+    let detail = response.statusText;
+    try {
+      const body = await response.json();
+      if (body.detail) detail = body.detail;
+    } catch {
+      // response body wasn't JSON, use statusText
+    }
+    throw new Error(`API error: ${response.status} — ${detail}`);
   }
 
   return response.json();

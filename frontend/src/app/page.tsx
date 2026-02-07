@@ -7,7 +7,7 @@ import { analyzeHomework, type ModelResponse, type TaskType, type ModelTier } fr
 import { generateHomeworkPDF } from "@/utils/pdf";
 
 export default function Home() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [taskType, setTaskType] = useState<TaskType>("tekst");
   const [modelTier, setModelTier] = useState<ModelTier>("pro");
   const [responses, setResponses] = useState<ModelResponse[]>([]);
@@ -15,24 +15,24 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = async () => {
-    if (!selectedFile) return;
+    if (selectedFiles.length === 0) return;
 
     setIsLoading(true);
     setError(null);
     setResponses([]);
 
     try {
-      const results = await analyzeHomework(selectedFile, taskType, modelTier);
+      const results = await analyzeHomework(selectedFiles, taskType, modelTier);
       setResponses(results);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(err instanceof Error ? err.message : String(err || "An error occurred"));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleClear = () => {
-    setSelectedFile(null);
+    setSelectedFiles([]);
     setResponses([]);
     setError(null);
   };
@@ -89,8 +89,8 @@ export default function Home() {
               3. Upload your homework image
             </h2>
             <UploadZone
-              onFileSelect={setSelectedFile}
-              selectedFile={selectedFile}
+              onFilesSelect={setSelectedFiles}
+              selectedFiles={selectedFiles}
               onClear={handleClear}
             />
           </section>
@@ -99,7 +99,7 @@ export default function Home() {
           <section className="flex justify-center">
             <button
               onClick={handleAnalyze}
-              disabled={!selectedFile || isLoading}
+              disabled={selectedFiles.length === 0 || isLoading}
               className="flex items-center gap-2 rounded-xl bg-orange-500 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (

@@ -65,10 +65,10 @@ class ModelResponse(BaseModel):
 async def analyze_homework(
     task_type: str = Form(...),
     model_tier: str = Form("pro"),  # thinking, fast, or pro
-    file: UploadFile = File(...)
+    files: List[UploadFile] = File(...)
 ):
-    # 1. Read file bytes
-    image_bytes = await file.read()
+    # 1. Read all file bytes
+    images_bytes = [await f.read() for f in files]
 
     # 2. Parse model tier
     try:
@@ -80,11 +80,10 @@ async def analyze_homework(
     system_prompt = get_prompt_for_task(task_type)
 
     # 4. Run all models in parallel using asyncio.gather
-    # This makes the wait time equal to the slowest model, not the sum of all three.
     results = await asyncio.gather(
-        ask_gpt(system_prompt, image_bytes, tier),
-        ask_claude(system_prompt, image_bytes, tier),
-        ask_gemini(system_prompt, image_bytes, tier)
+        ask_gpt(system_prompt, images_bytes, tier),
+        ask_claude(system_prompt, images_bytes, tier),
+        ask_gemini(system_prompt, images_bytes, tier)
     )
 
     return results

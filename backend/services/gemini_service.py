@@ -31,8 +31,8 @@ def detect_mime_type(image_bytes: bytes) -> str:
     return "image/jpeg"
 
 
-async def ask_gemini(system_prompt: str, image_bytes: bytes, model_tier: ModelTier = ModelTier.PRO) -> dict:
-    """Query Gemini with an image and system prompt."""
+async def ask_gemini(system_prompt: str, images_bytes: list[bytes], model_tier: ModelTier = ModelTier.PRO) -> dict:
+    """Query Gemini with images and system prompt."""
     model_config = get_gemini_model(model_tier)
     model_id = model_config["model_id"]
     display_name = model_config["display_name"]
@@ -42,23 +42,19 @@ async def ask_gemini(system_prompt: str, image_bytes: bytes, model_tier: ModelTi
         from google.genai import types
 
         client = get_client()
-        mime_type = detect_mime_type(image_bytes)
 
-        # Create image part using from_bytes
-        image_part = types.Part.from_bytes(
-            data=image_bytes,
-            mime_type=mime_type
-        )
+        # Build parts: all images then text
+        parts = []
+        for img_bytes in images_bytes:
+            mime_type = detect_mime_type(img_bytes)
+            parts.append(types.Part.from_bytes(data=img_bytes, mime_type=mime_type))
 
-        # Create text part - use dict format instead of from_text
-        text_part = types.Part(text="Please analyze this Dutch homework image according to your instructions.")
+        count = len(images_bytes)
+        parts.append(types.Part(
+            text=f"Please analyze {'these' if count > 1 else 'this'} Dutch homework image{'s' if count > 1 else ''} according to your instructions."
+        ))
 
-        contents = [
-            types.Content(
-                role="user",
-                parts=[image_part, text_part]
-            )
-        ]
+        contents = [types.Content(role="user", parts=parts)]
 
         # Configure generation - enable thinking for thinking tier
         if model_tier == ModelTier.THINKING:

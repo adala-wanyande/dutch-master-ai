@@ -29,38 +29,36 @@ def detect_media_type(image_bytes: bytes) -> str:
     return "image/jpeg"
 
 
-async def ask_claude(system_prompt: str, image_bytes: bytes, model_tier: ModelTier = ModelTier.PRO) -> dict:
-    """Query Claude with an image and system prompt."""
+async def ask_claude(system_prompt: str, images_bytes: list[bytes], model_tier: ModelTier = ModelTier.PRO) -> dict:
+    """Query Claude with images and system prompt."""
     model_config = get_anthropic_model(model_tier)
     model_id = model_config["model_id"]
     display_name = model_config["display_name"]
     max_tokens = model_config["max_tokens"]
 
-    base64_image = base64.b64encode(image_bytes).decode("utf-8")
-    media_type = detect_media_type(image_bytes)
+    # Build content parts: all images then text
+    content_parts = []
+    for img_bytes in images_bytes:
+        b64 = base64.b64encode(img_bytes).decode("utf-8")
+        media_type = detect_media_type(img_bytes)
+        content_parts.append({
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": media_type,
+                "data": b64
+            }
+        })
+
+    count = len(images_bytes)
+    content_parts.append({
+        "type": "text",
+        "text": f"Please analyze {'these' if count > 1 else 'this'} Dutch homework image{'s' if count > 1 else ''} according to your instructions."
+    })
 
     try:
         client = get_client()
-
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": media_type,
-                            "data": base64_image
-                        }
-                    },
-                    {
-                        "type": "text",
-                        "text": "Please analyze this Dutch homework image according to your instructions."
-                    }
-                ]
-            }
-        ]
+        messages = [{"role": "user", "content": content_parts}]
 
         # Use extended thinking for the thinking tier
         if model_tier == ModelTier.THINKING:
@@ -75,11 +73,11 @@ async def ask_claude(system_prompt: str, image_bytes: bytes, model_tier: ModelTi
                 system=system_prompt,
             )
             # Extract text from thinking response (may have thinking blocks)
-            content_parts = []
+            text_parts = []
             for block in response.content:
                 if block.type == "text":
-                    content_parts.append(block.text)
-            content = "\n".join(content_parts)
+                    text_parts.append(block.text)
+            content = "\n".join(text_parts)
         else:
             response = await client.messages.create(
                 model=model_id,
